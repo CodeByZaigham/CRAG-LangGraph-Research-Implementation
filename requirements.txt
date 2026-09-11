@@ -10,3 +10,4 @@ pypdf
 chroma
 langchain-chroma
 langchain-classic
+langchain-community
