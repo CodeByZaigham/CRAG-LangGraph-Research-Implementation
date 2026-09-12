@@ -1,6 +1,5 @@
 <p align="center">
-  <img src="/Paper Architecture notes.png
-  " alt="research paper architecture explained" width="100%">
+  <img src="Paper Architecture notes.png" alt="research paper architecture explained" width="100%">
 </p>
 
 # CRAG-LangGraph-Research-Implementation
