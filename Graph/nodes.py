@@ -10,6 +10,8 @@ from RAG_pipelines.retriever import retrieve_embeddings
 from state import state
 import os
 import json
+import re
+from typing import List
 
 def load_document(state:state):
     path=state['doc_path']
@@ -34,21 +36,80 @@ def check_retrieved_chunks(state:state):
     lower_threshold=0.3
     scores=[]
     good_docs=[]
-    prompt=ChatPromptTemplate([
-        ("system",""""""),
-        ("human","{document}")
+    status="not assigned"
+    prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+        You are a retrieval evaluator in a Corrective Retrieval-Augmented Generation (CRAG) system.
+
+        Your task is to evaluate how relevant a retrieved document chunk is to the user's query.
+
+        Evaluate the document based ONLY on its ability to help answer the query.
+
+        Scoring criteria:
+        - 0.00–0.29: Irrelevant. The document does not contain useful information for the query.
+        - 0.30–0.59: Weakly relevant. The document has some related information but is insufficient or mostly indirect.
+        - 0.60–0.79: Relevant. The document contains useful information that can help answer the query.
+        - 0.80–1.00: Highly relevant. The document directly contains important information needed to answer the query.
+
+        Consider semantic relevance, factual usefulness, and how directly the document addresses the query.
+        Do NOT judge writing quality, grammar, or whether the document completely answers the query.
+
+        IMPORTANT:
+        Return ONLY a single floating-point number between 0.0 and 1.0.
+        Do not return words, explanations, labels, JSON, markdown, or any other text.
+        """
+    ),
+    (
+        "human",
+        """
+        User Query:
+        {query}
+
+        Retrieved Document:
+        {document}
+
+        Relevance Score:
+        """
+    )
     ])
     chain=RunnableSequence(prompt | get_llm() )
     for doc in context:
-        response=chain.invoke({"document":doc , "query":query})
-        if float(response) > 0.3:
+        response=chain.invoke({"document":doc.page_content , "query":query})
+        if float(response.content.strip()) >= lower_threshold:
             good_docs.append(doc)
-            scores.append(float(response))
+            scores.append(float(response.content.strip()))
 
-    return {"good_docs":good_docs , "scores":scores}
+    for score in scores:
+        if score >= upper_threshold:
+            status="correct"
+            break
+        elif score >= lower_threshold: status="ambigious"
+        else: status="incorrect"
+    return {"good_docs":good_docs , "scores":scores , "status":status}
 
 def refine_docs(state:state):
-    pass
+    def decompose_to_sentences(text: str) -> List[str]:
+        text = re.sub(r"\s+", " ", text).strip()
+        sentences = re.split(r"(?<=[.!?])\s+", text)
+        return [s.strip() for s in sentences if len(s.strip()) > 20]
+
+    prompt=ChatPromptTemplate.from_messages([
+        ("system",""""""),
+        ("human","""""")
+    ])
+     
+    for doc in state["good_docs"]:
+        sentences=decompose_to_sentences(doc.page_content)
+        for sentence in sentences:
+
+
+
+
+
+
+
 
 def search_web(state:state):
     pass
