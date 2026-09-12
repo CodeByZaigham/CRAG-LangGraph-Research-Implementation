@@ -95,20 +95,64 @@ def refine_docs(state:state):
         sentences = re.split(r"(?<=[.!?])\s+", text)
         return [s.strip() for s in sentences if len(s.strip()) > 20]
 
-    prompt=ChatPromptTemplate.from_messages([
-        ("system",""""""),
-        ("human","""""")
+    context="".join(doc.page_content for doc in state["good_docs"]).strip()
+    kept_strips:list=[]
+
+
+    prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+        You are a strict relevance evaluator in a Corrective Retrieval-Augmented Generation (CRAG) system.
+
+        Your task is to determine whether the retrieved sentence contains information that is relevant and useful for answering the user's query.
+
+        Return True ONLY when the sentence provides information that directly or meaningfully helps answer the query.
+
+        Return False when:
+        - The sentence is unrelated to the query.
+        - The sentence only shares a weak or superficial keyword overlap.
+        - The sentence provides background that does not help answer the query.
+        - The sentence is ambiguous or too vague to be useful.
+        - The sentence contradicts or is unrelated to what the query is asking.
+
+        Do not infer information that is not explicitly present in the sentence.
+        Do not use outside knowledge.
+        Judge the sentence only in relation to the given query.
+
+        IMPORTANT:
+        Your response MUST contain exactly one of these two values:
+
+        True
+        False
+
+        Do not return explanations, punctuation, quotes, JSON, markdown, or any other text.
+        """
+    ),
+    (
+        "human",
+        """
+        Query:
+        {query}
+
+        Sentence:
+        {sentence}
+
+        Is this sentence relevant and useful for answering the query?
+        """
+    )
     ])
-     
-    for doc in state["good_docs"]:
-        sentences=decompose_to_sentences(doc.page_content)
-        for sentence in sentences:
 
+    chain=RunnableSequence(prompt | get_llm() )
 
+    sentences=decompose_to_sentences(context)
+    for sentence in sentences:
+        response=chain.invoke({"query": state["query"] , "sentence": sentence})
+        if response.content.strip() == "True": kept_strips.append(sentence)
 
+    refined_content="".join(strip for strip in kept_strips).strip()
 
-
-
+    return {"kept_strips":kept_strips , "refined_context":refined_content}
 
 
 def search_web(state:state):

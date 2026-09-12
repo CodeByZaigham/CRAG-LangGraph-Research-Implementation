@@ -18,3 +18,8 @@ class state(TypedDict):
      good_docs:List[Document]
      scores:List[float]
      status:Literal["correct" , "incorrect" , "ambigious"]
+
+     #for refining docs
+
+     kept_strips:List[str]
+     refined_context:str
