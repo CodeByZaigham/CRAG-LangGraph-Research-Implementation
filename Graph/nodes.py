@@ -9,6 +9,7 @@ from RAG_pipelines.embeddings import create_embeddings,load_embeedings
 from RAG_pipelines.retriever import retrieve_embeddings
 from state import state
 import os
+import json
 
 def load_document(state:state):
     path=state['doc_path']
@@ -25,6 +26,37 @@ def retriever(state:state):
     query=state["query"]
     retrieved_docs=retrieve_embeddings({"query":query , "db":db})
     return {"retrieved_docs":retrieved_docs}
+
+def check_retrieved_chunks(state:state):
+    query=state["query"]
+    context=state["retrieved_docs"]
+    upper_threshold=0.7
+    lower_threshold=0.3
+    scores=[]
+    good_docs=[]
+    prompt=ChatPromptTemplate([
+        ("system",""""""),
+        ("human","{document}")
+    ])
+    chain=RunnableSequence(prompt | get_llm() )
+    for doc in context:
+        response=chain.invoke({"document":doc , "query":query})
+        if float(response) > 0.3:
+            good_docs.append(doc)
+            scores.append(float(response))
+
+    return {"good_docs":good_docs , "scores":scores}
+
+def refine_docs(state:state):
+    pass
+
+def search_web(state:state):
+    pass
+
+
+    
+
+    
 
 def generate_response(state:state):
     context=state["retrieved_docs"]
