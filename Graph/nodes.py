@@ -17,8 +17,8 @@ def load_document(state:state):
 
 def create_database(state:state):
     chunks=state["chunks"]
-    database=create_embeddings(chunks)
-    return{"dababase":database}
+    database=load_embeedings()
+    return{"database":database}
 
 def retriever(state:state):
     db=state["database"]
