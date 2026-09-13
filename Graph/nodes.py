@@ -167,3 +167,46 @@ def refine_docs(state:state):
     return {"refined_docs_context":refined_content}
 
 
+tool_node=ToolNode(tools)
+
+def search_web(state:state):
+    print("\n searching Web \n")
+    query=state["query"]
+    prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+        You are a web-search agent in a Corrective Retrieval-Augmented Generation (CRAG) system.
+
+        Your task is to search the web for the user's query using the available Tavily search tool.
+
+        Instructions:
+        - Use the Tavily search tool to find reliable and relevant information for the query.
+        - Search for the query exactly as needed to retrieve useful web sources.
+        - Prefer authoritative, trustworthy, and directly relevant sources.
+        - Retrieve up to 3 search results.
+        - Do not answer the user's query yourself.
+        - Do not summarize, interpret, or rewrite the search results.
+        - Your job is only to perform the web search and return the tool results.
+        """
+    ),
+    (
+        "human",
+        """
+        Search the web for the following query:
+
+        {query}
+        """
+    )
+    ])
+
+    chain=RunnableSequence(prompt | get_llm_with_tool())
+    response=chain.invoke({
+        "query":query
+    })
+
+    return {"messages":[response]}
+
+
+
+
