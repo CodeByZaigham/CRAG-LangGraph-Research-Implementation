@@ -207,6 +207,25 @@ def search_web(state:state):
 
     return {"messages":[response]}
 
+def refine_web_results(state:state):
+    print("\n refining web searches \n")
+    obj=refinement_tools()
+
+    tool_message = json.loads(state["messages"][-1].content)
+    content = tool_message["results"]
+
+    context = "\n\n".join(
+        result["content"]
+        for result in content
+        if isinstance(result, dict) and result.get("content")
+    )
+
+    refined_content=obj.get_refined_content(state["query"],context)
+
+    return {"refined_web_context":refined_content}
+
+
+
 
 
 
