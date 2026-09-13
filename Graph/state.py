@@ -22,4 +22,9 @@ class state(TypedDict):
      #for refining docs
 
      kept_strips:List[str]
-     refined_context:str
+     refined_docs_context:str
+
+     #for tool calling
+
+     messages:Annotated[list,add_messages]
+     refined_web_context:str
