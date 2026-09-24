@@ -9,3 +9,32 @@ Research implementation of Corrective Retrieval-Augmented Generation (CRAG) usin
 
 - https://arxiv.org/pdf/2401.15884
 
+# Graph flow:
+
+                    ┌──────────────┐
+                    │  Retriever   │
+                    └──────┬───────┘
+                           ↓
+                    ┌──────────────┐
+                    │  Evaluator   │
+                    └──────┬───────┘
+                           │
+             ┌─────────────┼─────────────┐
+             ↓             ↓             ↓
+         correct       ambiguous      incorrect
+             │             │             │
+             ↓             └──────┬──────┘
+       refine_docs                ↓
+             │                web_search
+             ↓                    ↓
+    generate_from_docs       tavily_tool
+                                 ↓
+                         refine_web_results
+                                 │
+                         ┌───────┴────────┐
+                         │                │
+                    ambiguous        incorrect
+                         │                │
+                         ↓                ↓
+              generate_from_both   generate_from_web
+
