@@ -12,3 +12,4 @@ langchain-chroma
 langchain-classic
 langchain-community
 langchain-text-splitters
+streamlit
